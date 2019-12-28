@@ -27,7 +27,7 @@ class BasicMAC_6h_vs_8z:
         self.agent_output_type = args.agent_output_type
 
         self.action_selector = action_REGISTRY[args.action_selector](args)
-        self.match_weight = 0.0;
+        self.match_weight = 0.0
         self.env_blender = Env_blender(64, 14, 196).cuda()
         self.delta1 = self.args.delta1
         self.delta2 = self.args.delta2        
@@ -37,12 +37,12 @@ class BasicMAC_6h_vs_8z:
         
         avail_actions = ep_batch["avail_actions"][:, t_ep]
         agent_local_outputs, hidden_states = self.forward(ep_batch, t_ep, test_mode=test_mode)
-        dummy0 = self.env_blender(hidden_states[:,0,:].view(8,-1)) 
-        dummy1 = self.env_blender(hidden_states[:,1,:].view(8,-1)) 
-        dummy2 = self.env_blender(hidden_states[:,2,:].view(8,-1)) 
-        dummy3 = self.env_blender(hidden_states[:,3,:].view(8,-1)) 
-        dummy4 = self.env_blender(hidden_states[:,4,:].view(8,-1))
-        dummy5 = self.env_blender(hidden_states[:,5,:].view(8,-1)) 
+        dummy0 = self.env_blender(hidden_states[:,0,:].view(self.args.batch_size_run,-1)) 
+        dummy1 = self.env_blender(hidden_states[:,1,:].view(self.args.batch_size_run,-1)) 
+        dummy2 = self.env_blender(hidden_states[:,2,:].view(self.args.batch_size_run,-1)) 
+        dummy3 = self.env_blender(hidden_states[:,3,:].view(self.args.batch_size_run,-1)) 
+        dummy4 = self.env_blender(hidden_states[:,4,:].view(self.args.batch_size_run,-1))
+        dummy5 = self.env_blender(hidden_states[:,5,:].view(self.args.batch_size_run,-1)) 
         
         agent0 = (dummy1 + dummy2 + dummy3 + dummy4 + dummy5)/5.0
         agent1 = (dummy0 + dummy2 + dummy3 + dummy4 + dummy5)/5.0
@@ -51,7 +51,12 @@ class BasicMAC_6h_vs_8z:
         agent4 = (dummy0 + dummy1 + dummy2 + dummy3 + dummy5)/5.0
         agent5 = (dummy0 + dummy1 + dummy2 + dummy3 + dummy4)/5.0
         
-        agent_global_outputs =th.cat((agent0.view((8,1,14)),agent1.view((8,1,14)),agent2.view((8,1,14)),agent3.view((8,1,14)),agent4.view((8,1,14)),agent5.view((8,1,14))),1)
+        agent_global_outputs =th.cat((agent0.view((self.args.batch_size_run,1,14)),
+                        agent1.view((self.args.batch_size_run,1,14)),
+                        agent2.view((self.args.batch_size_run,1,14)),
+                        agent3.view((self.args.batch_size_run,1,14)),
+                        agent4.view((self.args.batch_size_run,1,14)),
+                        agent5.view((self.args.batch_size_run,1,14))),1)
         # generate the action-value function of each agent
         agent_outputs = agent_local_outputs + agent_global_outputs
         
@@ -62,12 +67,12 @@ class BasicMAC_6h_vs_8z:
     def select_actions_comm_proto(self, ep_batch, t_ep, t_env, bs=slice(None), test_mode=False):
         avail_actions = ep_batch["avail_actions"][:, t_ep]
         agent_local_outputs, hidden_states = self.forward(ep_batch, t_ep, test_mode=test_mode)
-        dummy0 = self.env_blender(hidden_states[:,0,:].view(8,-1)) 
-        dummy1 = self.env_blender(hidden_states[:,1,:].view(8,-1)) 
-        dummy2 = self.env_blender(hidden_states[:,2,:].view(8,-1)) 
-        dummy3 = self.env_blender(hidden_states[:,3,:].view(8,-1)) 
-        dummy4 = self.env_blender(hidden_states[:,4,:].view(8,-1))
-        dummy5 = self.env_blender(hidden_states[:,5,:].view(8,-1)) 
+        dummy0 = self.env_blender(hidden_states[:,0,:].view(self.args.batch_size_run,-1)) 
+        dummy1 = self.env_blender(hidden_states[:,1,:].view(self.args.batch_size_run,-1)) 
+        dummy2 = self.env_blender(hidden_states[:,2,:].view(self.args.batch_size_run,-1)) 
+        dummy3 = self.env_blender(hidden_states[:,3,:].view(self.args.batch_size_run,-1)) 
+        dummy4 = self.env_blender(hidden_states[:,4,:].view(self.args.batch_size_run,-1))
+        dummy5 = self.env_blender(hidden_states[:,5,:].view(self.args.batch_size_run,-1)) 
             
         agent0 = (dummy1 + dummy2 + dummy3 + dummy4 + dummy5)/5.0
         agent1 = (dummy0 + dummy2 + dummy3 + dummy4 + dummy5)/5.0
@@ -107,7 +112,12 @@ class BasicMAC_6h_vs_8z:
         agent4 = (dummy0 + dummy1 + dummy2 + dummy3 + dummy5)/5.0
         agent5 = (dummy0 + dummy1 + dummy2 + dummy3 + dummy4)/5.0
         
-        agent_global_outputs =th.cat((agent0.view((8,1,14)),agent1.view((8,1,14)),agent2.view((8,1,14)),agent3.view((8,1,14)),agent4.view((8,1,14)),agent5.view((8,1,14))),1)
+        agent_global_outputs =th.cat((agent0.view((self.args.batch_size_run,1,14)),
+                                    agent1.view((self.args.batch_size_run,1,14)),
+                                    agent2.view((self.args.batch_size_run,1,14)),
+                                    agent3.view((self.args.batch_size_run,1,14)),
+                                    agent4.view((self.args.batch_size_run,1,14)),
+                                    agent5.view((self.args.batch_size_run,1,14))),1)
         largest = th.topk(agent_local_outputs,2, dim = 2)
         #print('agent_local_outputs shape is: ' + str(agent_local_outputs.shape))
         #print('largest shape is: ' + str(largest[0]))
